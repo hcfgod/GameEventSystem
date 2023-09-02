@@ -17,53 +17,84 @@ public class EventTrigger
 
 	public void TriggerEvent(GameEvent gameEvent, object eventData, bool useThreadSafeOperations = false, EventQueueManager eventQueueManager = null)
 	{
+		if (gameEvent == null)
+		{
+			Debug.LogError("GameEvent is null.");
+			return;
+		}
+
+		if (sharedState == null)
+		{
+			Debug.LogError("SharedState is null.");
+			return;
+		}
+
+		if (useThreadSafeOperations && eventQueueManager == null)
+		{
+			Debug.LogError("EventQueueManager is null but thread-safe operations are requested.");
+			return;
+		}
+		
+		if (eventData == null)
+		{
+			Debug.LogError("Event data is null.");
+			return;
+		}
+		
 		Action actualTriggerEventAction = () =>
 		{
-			float currentTime = Time.time;
-			
-			if (currentTime - gameEvent.LastTriggerTime < gameEvent.CooldownTime)
+			try
 			{
-				return;
-			}
+				float currentTime = Time.time;
 			
-			foreach (var condition in gameEvent.Conditions)
-			{
-				if (condition != null && !condition(gameEvent, eventData))
+				if (currentTime - gameEvent.LastTriggerTime < gameEvent.CooldownTime)
 				{
 					return;
 				}
-			}
-		
-			if(gameEvent.status == null)
-			{
-				gameEvent.status = new OneTimeEventStatus();
-			}
-				
-			if(gameEvent.status.CanTrigger(gameEvent))
-			{
-				string category = gameEvent.eventCategory;
-				string eventName = gameEvent.eventName;
-	
-				if (sharedState.DisabledCategories.Contains(category))
+			
+				foreach (var condition in gameEvent.Conditions)
 				{
-					return;
-				}
-	
-				if (sharedState.Events.ContainsKey(category) && sharedState.Events[category].ContainsKey(gameEvent.eventName))
-				{
-					foreach (var kvp in sharedState.Events[category][gameEvent.eventName])
+					if (condition != null && !condition(gameEvent, eventData))
 					{
-						kvp.Value?.Invoke(eventData);
+						return;
 					}
 				}
-
-				foreach (var chainedEvent in gameEvent.ChainedEvents)
+		
+				if(gameEvent.status == null)
 				{
-					monoBehaviour.StartCoroutine(TriggerChainedEvent(chainedEvent, eventData));
+					gameEvent.status = new OneTimeEventStatus();
 				}
 				
-				if(gameEvent.CooldownTime > 0)
-					gameEvent.LastTriggerTime = currentTime;
+				if(gameEvent.status.CanTrigger(gameEvent))
+				{
+					string category = gameEvent.eventCategory;
+					string eventName = gameEvent.eventName;
+	
+					if (sharedState.DisabledCategories.Contains(category))
+					{
+						return;
+					}
+	
+					if (sharedState.Events.ContainsKey(category) && sharedState.Events[category].ContainsKey(gameEvent.eventName))
+					{
+						foreach (var kvp in sharedState.Events[category][gameEvent.eventName])
+						{
+							kvp.Value?.Invoke(eventData);
+						}
+					}
+
+					foreach (var chainedEvent in gameEvent.ChainedEvents)
+					{
+						monoBehaviour.StartCoroutine(TriggerChainedEvent(chainedEvent, eventData));
+					}
+				
+					if(gameEvent.CooldownTime > 0)
+						gameEvent.LastTriggerTime = currentTime;
+				}
+			}
+			catch(Exception e)
+			{
+				Debug.LogError($"An error occurred while triggering the event: {e.Message}");
 			}
 		};
 

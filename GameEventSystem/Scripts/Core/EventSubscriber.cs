@@ -16,27 +16,58 @@ public class EventSubscriber
 
 	public void Subscribe(GameEvent gameEvent, Action<object> listener, int priority = 0, bool useThreadSafeOperations = false)
 	{
+		if (gameEvent == null)
+		{
+			Debug.LogError("GameEvent is null.");
+			return;
+		}
+
+		if (listener == null)
+		{
+			Debug.LogError("Listener is null.");
+			return;
+		}
+
+		if (sharedState == null)
+		{
+			Debug.LogError("SharedState is null.");
+			return;
+		}
+
+		if (useThreadSafeOperations && eventQueueManager == null)
+		{
+			Debug.LogError("EventQueueManager is null but thread-safe operations are requested.");
+			return;
+		}
+		
 		Action actualSubscribeAction = () =>
 		{
-			string category = gameEvent.eventCategory;
-			string eventName = gameEvent.eventName;
-
-			if (!sharedState.Events.ContainsKey(category))
+			try
 			{
-				sharedState.Events[category] = new Dictionary<string, SortedDictionary<int, Action<object>>>();
-			}
+				string category = gameEvent.eventCategory;
+				string eventName = gameEvent.eventName;
 
-			if (!sharedState.Events[category].ContainsKey(eventName))
+				if (!sharedState.Events.ContainsKey(category))
+				{
+					sharedState.Events[category] = new Dictionary<string, SortedDictionary<int, Action<object>>>();
+				}
+
+				if (!sharedState.Events[category].ContainsKey(eventName))
+				{
+					sharedState.Events[category][eventName] = new SortedDictionary<int, Action<object>>();
+				}
+
+				if (!sharedState.Events[category][eventName].ContainsKey(priority))
+				{
+					sharedState.Events[category][eventName][priority] = null;
+				}
+
+				sharedState.Events[category][eventName][priority] += listener;
+			}
+		    catch(Exception e)
 			{
-				sharedState.Events[category][eventName] = new SortedDictionary<int, Action<object>>();
+				Debug.LogError($"An error occurred while subscribing to the event: {e.Message}");
 			}
-
-			if (!sharedState.Events[category][eventName].ContainsKey(priority))
-			{
-				sharedState.Events[category][eventName][priority] = null;
-			}
-
-			sharedState.Events[category][eventName][priority] += listener;
 		};
 
 		if (useThreadSafeOperations)
