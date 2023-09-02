@@ -19,26 +19,22 @@ public class EventTrigger
 	{
 		if (gameEvent == null)
 		{
-			Debug.LogError("GameEvent is null.");
-			return;
+			throw new GameEventException("GameEvent is null.");
 		}
 
 		if (sharedState == null)
 		{
-			Debug.LogError("SharedState is null.");
-			return;
+			throw new GameEventException("SharedState is null.");
 		}
 
 		if (useThreadSafeOperations && eventQueueManager == null)
 		{
-			Debug.LogError("EventQueueManager is null but thread-safe operations are requested.");
-			return;
+			throw new GameEventException("EventQueueManager is null but thread-safe operations are requested.");
 		}
 		
 		if (eventData == null)
 		{
-			Debug.LogError("Event data is null.");
-			return;
+			throw new GameEventException("Event data is null.");
 		}
 		
 		Action actualTriggerEventAction = () =>
@@ -91,6 +87,10 @@ public class EventTrigger
 					if(gameEvent.CooldownTime > 0)
 						gameEvent.LastTriggerTime = currentTime;
 				}
+			}
+			catch(GameEventException gameEventException)
+			{
+				Debug.LogError($"An error occurred: {gameEventException.Message}");
 			}
 			catch(Exception e)
 			{

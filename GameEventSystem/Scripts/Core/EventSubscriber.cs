@@ -18,26 +18,22 @@ public class EventSubscriber
 	{
 		if (gameEvent == null)
 		{
-			Debug.LogError("GameEvent is null.");
-			return;
+			throw new GameEventException("GameEvent is null.");
 		}
 
 		if (listener == null)
 		{
-			Debug.LogError("Listener is null.");
-			return;
+			throw new GameEventException("Listener is null.");
 		}
 
 		if (sharedState == null)
 		{
-			Debug.LogError("SharedState is null.");
-			return;
+			throw new GameEventException("SharedState is null.");
 		}
 
 		if (useThreadSafeOperations && eventQueueManager == null)
 		{
-			Debug.LogError("EventQueueManager is null but thread-safe operations are requested.");
-			return;
+			throw new GameEventException("EventQueueManager is null but thread-safe operations are requested.");
 		}
 		
 		Action actualSubscribeAction = () =>
@@ -63,6 +59,10 @@ public class EventSubscriber
 				}
 
 				sharedState.Events[category][eventName][priority] += listener;
+			}
+			catch(GameEventException gameEventException)
+			{
+				Debug.LogError($"An error occurred: {gameEventException.Message}");
 			}
 		    catch(Exception e)
 			{
