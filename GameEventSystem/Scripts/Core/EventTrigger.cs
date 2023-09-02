@@ -49,7 +49,7 @@ public class EventTrigger
 		}
 	}
 
-	public void TriggerEventWithDelay(GameEvent gameEvent, object data, float delay, string customID, bool useThreadSafeOperations = false, EventQueueManager eventQueueManager = null)
+	public void TriggerEventWithDelay(GameEvent gameEvent, object eventData, float delay, string customID, bool useThreadSafeOperations = false, EventQueueManager eventQueueManager = null)
 	{
 		Action actualTriggerEventWithDelayAction = () =>
 		{
@@ -67,9 +67,14 @@ public class EventTrigger
 			}
 
 			string coroutineID = System.Guid.NewGuid().ToString();
-			Coroutine coroutine = monoBehaviour.StartCoroutine(DelayedEvent(gameEvent, data, delay, customID, coroutineID));
+			Coroutine coroutine = monoBehaviour.StartCoroutine(DelayedEvent(gameEvent, eventData, delay, customID, coroutineID));
 			sharedState.RunningDelayedEvents[eventName][customID][coroutineID] = coroutine;
 			
+			// Handle chained events
+			foreach (var chainedEvent in gameEvent.ChainedEvents)
+			{
+				monoBehaviour.StartCoroutine(TriggerChainedEvent(chainedEvent, eventData));
+			}
 		};
   
 		if (useThreadSafeOperations)
@@ -82,7 +87,7 @@ public class EventTrigger
 		}
 	}
 	
-	private IEnumerator DelayedEvent(GameEvent gameEvent, object data, float delay, string customID, string coroutineID) 
+	private IEnumerator DelayedEvent(GameEvent gameEvent, object eventData, float delay, string customID, string coroutineID) 
 	{
 		string category = gameEvent.eventCategory;
 		string eventName = gameEvent.eventName;
@@ -95,6 +100,12 @@ public class EventTrigger
 			sharedState.RunningDelayedEvents[eventName].Remove(customID);
 		}
 
-		TriggerEvent(gameEvent, data);
+		TriggerEvent(gameEvent, eventData);
+	}
+	
+	private IEnumerator TriggerChainedEvent(ChainedEvent chainedEvent, object eventData)
+	{
+		yield return new WaitForSeconds(chainedEvent.Delay);
+		TriggerEvent(chainedEvent.Event, eventData);
 	}
 }

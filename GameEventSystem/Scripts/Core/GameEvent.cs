@@ -9,4 +9,6 @@ public class GameEvent : ScriptableObject
 	public string eventCategory;
 	public IEventStatus status;
 	public bool HasBeenTriggered { get; set; }
+
+	public List<ChainedEvent> ChainedEvents;  // New property
 }
