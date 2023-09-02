@@ -63,18 +63,20 @@ public class EventTrigger
         
 			if (!sharedState.RunningDelayedEvents.ContainsKey(eventName))
 			{
-				sharedState.RunningDelayedEvents[eventName] = new Dictionary<string, List<Coroutine>>();
+    			sharedState.RunningDelayedEvents[eventName] = new Dictionary<string, Dictionary<string, Coroutine>>();
 			}
 
-			if(!sharedState.RunningDelayedEvents[eventName].ContainsKey(customID))
+			if (!sharedState.RunningDelayedEvents[eventName].ContainsKey(customID))
 			{
-				sharedState.RunningDelayedEvents[eventName][customID] = new List<Coroutine>();
+    			sharedState.RunningDelayedEvents[eventName][customID] = new Dictionary<string, Coroutine>();
 			}
 
-			Coroutine coroutine = monoBehaviour.StartCoroutine(DelayedEvent(gameEvent, data, delay, customID));
-			sharedState.RunningDelayedEvents[eventName][customID].Add(coroutine);
+			string coroutineID = System.Guid.NewGuid().ToString();
+			Coroutine coroutine = monoBehaviour.StartCoroutine(DelayedEvent(gameEvent, data, delay, customID, coroutineID));
+			sharedState.RunningDelayedEvents[eventName][customID][coroutineID] = coroutine;
+			
 		};
-
+  
 		if (useThreadSafeOperations)
 		{
 			eventQueueManager.EnqueueAction(actualTriggerEventWithDelayAction);
@@ -85,16 +87,17 @@ public class EventTrigger
 		}
 	}
 	
-	private IEnumerator DelayedEvent(GameEvent gameEvent, object data, float delay, string customID)
+	private IEnumerator DelayedEvent(GameEvent gameEvent, object data, float delay, string customID, string coroutineID) 
 	{
 		string category = gameEvent.eventCategory;
 		string eventName = gameEvent.eventName;
 		
 		yield return new WaitForSeconds(delay);
 
-		if (sharedState.RunningDelayedEvents.ContainsKey(gameEvent.eventName))
+		if (sharedState.RunningDelayedEvents.ContainsKey(eventName) && 
+			sharedState.RunningDelayedEvents[eventName].ContainsKey(customID)) 
 		{
-			sharedState.RunningDelayedEvents[gameEvent.eventName].Remove(customID);
+			sharedState.RunningDelayedEvents[eventName].Remove(customID);
 		}
 
 		TriggerEvent(gameEvent, data);

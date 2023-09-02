@@ -19,4 +19,8 @@ public class EventQueueManager
 			mainThreadQueue.Dequeue().Invoke();
 		}
 	}
+
+	public void ClearQueue() {
+		mainThreadQueue.Clear();
+	}
 }

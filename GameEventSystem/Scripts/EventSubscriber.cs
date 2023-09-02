@@ -71,4 +71,22 @@ public class EventSubscriber
 			actualUnsubscribeAction();
 		}
 	}
+	
+	// New method to clean up unused entries
+	public void Cleanup() 
+	{
+		foreach (var category in sharedState.Events.Keys) 
+		{
+			foreach (string eventName in sharedState.Events[category].Keys) 
+			{
+				if (sharedState.Events[category][eventName].Count == 0) 
+				{
+					sharedState.Events[category].Remove(eventName);
+				}
+			}
+			if (sharedState.Events[category].Count == 0) {
+				sharedState.Events.Remove(category);
+			}
+		}
+	}
 }

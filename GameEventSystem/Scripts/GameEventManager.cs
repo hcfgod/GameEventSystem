@@ -102,14 +102,14 @@ public class GameEventManager : MonoBehaviour
 	public void CancelDelayedEvent(GameEvent gameEvent, string customID = null)
 	{
 		string eventName = gameEvent.eventName;
-		
+
 		if (sharedState.RunningDelayedEvents.ContainsKey(eventName))
 		{
 			if (customID == null)
 			{
 				foreach (var idCoroutines in sharedState.RunningDelayedEvents[eventName])
 				{
-					foreach (var coroutine in idCoroutines.Value)
+					foreach (var coroutine in idCoroutines.Value.Values)
 					{
 						StopCoroutine(coroutine);
 					}
@@ -121,7 +121,7 @@ public class GameEventManager : MonoBehaviour
 			{
 				if (sharedState.RunningDelayedEvents[eventName].ContainsKey(customID))
 				{
-					foreach (var coroutine in sharedState.RunningDelayedEvents[eventName][customID])
+					foreach (var coroutine in sharedState.RunningDelayedEvents[eventName][customID].Values)
 					{
 						StopCoroutine(coroutine);
 					}
@@ -138,5 +138,11 @@ public class GameEventManager : MonoBehaviour
 		{
 			Debug.LogWarning($"No running delayed events with the name {eventName} found.");
 		}
+	}
+	
+	public void Cleanup()
+	{
+		eventSubscriber.Cleanup();
+		eventQueueManager.ClearQueue();
 	}
 }
