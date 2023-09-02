@@ -1,9 +1,7 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
-[System.Serializable]
-public class ChainedEvent  // New class
+[CreateAssetMenu(fileName = "New Chained Event", menuName = "Chained Event")]
+public class ChainedEvent : ScriptableObject
 {
 	public GameEvent Event;
 	public float Delay;

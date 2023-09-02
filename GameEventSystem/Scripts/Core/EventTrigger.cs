@@ -19,6 +19,9 @@ public class EventTrigger
 	{
 		Action actualTriggerEventAction = () =>
 		{
+			if(gameEvent.status == null)
+				gameEvent.status = new OneTimeEventStatus();
+				
 			if(gameEvent.status.CanTrigger(gameEvent))
 			{
 				string category = gameEvent.eventCategory;
@@ -35,6 +38,12 @@ public class EventTrigger
 					{
 						kvp.Value?.Invoke(eventData);
 					}
+				}
+			
+				// Handle chained events
+				foreach (var chainedEvent in gameEvent.ChainedEvents)
+				{
+					monoBehaviour.StartCoroutine(TriggerChainedEvent(chainedEvent, eventData));
 				}
 			}
 		};
@@ -69,12 +78,6 @@ public class EventTrigger
 			string coroutineID = System.Guid.NewGuid().ToString();
 			Coroutine coroutine = monoBehaviour.StartCoroutine(DelayedEvent(gameEvent, eventData, delay, customID, coroutineID));
 			sharedState.RunningDelayedEvents[eventName][customID][coroutineID] = coroutine;
-			
-			// Handle chained events
-			foreach (var chainedEvent in gameEvent.ChainedEvents)
-			{
-				monoBehaviour.StartCoroutine(TriggerChainedEvent(chainedEvent, eventData));
-			}
 		};
   
 		if (useThreadSafeOperations)
@@ -103,6 +106,7 @@ public class EventTrigger
 		TriggerEvent(gameEvent, eventData);
 	}
 	
+	// This part remains the same as your previous implementation
 	private IEnumerator TriggerChainedEvent(ChainedEvent chainedEvent, object eventData)
 	{
 		yield return new WaitForSeconds(chainedEvent.Delay);

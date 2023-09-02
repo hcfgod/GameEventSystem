@@ -10,5 +10,5 @@ public class GameEvent : ScriptableObject
 	public IEventStatus status;
 	public bool HasBeenTriggered { get; set; }
 
-	public List<ChainedEvent> ChainedEvents;  // New property
+	public List<ChainedEvent> ChainedEvents;
 }
