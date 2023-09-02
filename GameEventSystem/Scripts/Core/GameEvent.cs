@@ -9,9 +9,16 @@ public class GameEvent : ScriptableObject
 	public string eventCategory;
 	public IEventStatus status;
 	
-	public bool HasBeenTriggered { get; set; }
+	public bool HasBeenTriggered;
 	public float CooldownTime;
-	public float LastTriggerTime { get; set; }
+	public float LastTriggerTime = 0;
 	
 	public List<ChainedEvent> ChainedEvents;
+	
+	public List<EventCondition> Conditions = new List<EventCondition>();
+	
+	void OnEnable()
+	{
+		LastTriggerTime = 0;
+	}
 }

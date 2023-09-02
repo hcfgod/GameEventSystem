@@ -26,8 +26,18 @@ public class EventTrigger
 				return;
 			}
 			
+			foreach (var condition in gameEvent.Conditions)
+			{
+				if (condition != null && !condition(gameEvent, eventData))
+				{
+					return;
+				}
+			}
+		
 			if(gameEvent.status == null)
+			{
 				gameEvent.status = new OneTimeEventStatus();
+			}
 				
 			if(gameEvent.status.CanTrigger(gameEvent))
 			{
@@ -52,7 +62,8 @@ public class EventTrigger
 					monoBehaviour.StartCoroutine(TriggerChainedEvent(chainedEvent, eventData));
 				}
 				
-				gameEvent.LastTriggerTime = currentTime;
+				if(gameEvent.CooldownTime > 0)
+					gameEvent.LastTriggerTime = currentTime;
 			}
 		};
 
