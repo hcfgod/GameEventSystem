@@ -19,6 +19,13 @@ public class EventTrigger
 	{
 		Action actualTriggerEventAction = () =>
 		{
+			float currentTime = Time.time;
+			
+			if (currentTime - gameEvent.LastTriggerTime < gameEvent.CooldownTime)
+			{
+				return;
+			}
+			
 			if(gameEvent.status == null)
 				gameEvent.status = new OneTimeEventStatus();
 				
@@ -39,12 +46,13 @@ public class EventTrigger
 						kvp.Value?.Invoke(eventData);
 					}
 				}
-			
-				// Handle chained events
+
 				foreach (var chainedEvent in gameEvent.ChainedEvents)
 				{
 					monoBehaviour.StartCoroutine(TriggerChainedEvent(chainedEvent, eventData));
 				}
+				
+				gameEvent.LastTriggerTime = currentTime;
 			}
 		};
 
