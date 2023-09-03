@@ -55,7 +55,8 @@ public class GameEventManager : MonoBehaviour
 
 		eventSubscriber = new EventSubscriber(sharedState, eventQueueManager);
 		eventTrigger = new EventTrigger(sharedState, this);
-		eventTrigger.Middlewares.Add(new LoggingMiddleware());
+		eventTrigger.EventDistributionStrategy = new LocalEventDistribution(this);
+		//eventTrigger.Middlewares.Add(new LoggingMiddleware());
 		eventTrigger.Middlewares.Add(new ValidationMiddleware());
 	}
 	

@@ -9,6 +9,8 @@ public class EventTrigger
 	private SharedEventState sharedState;
 	private MonoBehaviour monoBehaviour;
 	
+	public IEventDistributionStrategy EventDistributionStrategy { get; set; }
+
 	public List<IEventMiddleware> Middlewares { get; set; } = new List<IEventMiddleware>();
 
 	public EventTrigger(SharedEventState sharedState, MonoBehaviour monoBehaviour)
@@ -16,7 +18,7 @@ public class EventTrigger
 		this.sharedState = sharedState;
 		this.monoBehaviour = monoBehaviour;
 	}
-
+	
 	public void TriggerEvent(GameEvent gameEvent, object eventData, bool useThreadSafeOperations = false, EventQueueManager eventQueueManager = null)
 	{
 		foreach (var middleware in Middlewares)
@@ -26,7 +28,7 @@ public class EventTrigger
 				return;
 			}
 		}
-		
+    
 		if (sharedState == null)
 		{
 			throw new GameEventException("SharedState is null.");
@@ -36,18 +38,18 @@ public class EventTrigger
 		{
 			throw new GameEventException("EventQueueManager is null but thread-safe operations are requested.");
 		}
-		
+    
 		Action actualTriggerEventAction = () =>
 		{
 			try
 			{
 				float currentTime = Time.time;
-			
+        
 				if (currentTime - gameEvent.LastTriggerTime < gameEvent.CooldownTime)
 				{
 					return;
 				}
-			
+        
 				foreach (var condition in gameEvent.Conditions)
 				{
 					if (condition != null && !condition(gameEvent, eventData))
@@ -55,47 +57,28 @@ public class EventTrigger
 						return;
 					}
 				}
-		
-				if(gameEvent.status == null)
-				{
-					gameEvent.status = new OneTimeEventStatus();
-				}
-				
+
 				if(gameEvent.status.CanTrigger(gameEvent))
 				{
-					string category = gameEvent.eventCategory;
-					string eventName = gameEvent.eventName;
-	
-					if (sharedState.DisabledCategories.Contains(category))
-					{
-						return;
-					}
-	
-					if (sharedState.Events.ContainsKey(category) && sharedState.Events[category].ContainsKey(gameEvent.eventName))
-					{
-						foreach (var kvp in sharedState.Events[category][gameEvent.eventName])
-						{
-							kvp.Value?.Invoke(eventData);
-						}
-					}
-
+					EventDistributionStrategy?.DistributeEvent(gameEvent, eventData, sharedState);
+            
 					foreach (var chainedEvent in gameEvent.ChainedEvents)
 					{
 						monoBehaviour.StartCoroutine(TriggerChainedEvent(chainedEvent, eventData));
 					}
-				
+					
 					if(gameEvent.CooldownTime > 0)
 						gameEvent.LastTriggerTime = currentTime;
 				}
 			}
-			catch(GameEventException gameEventException)
-			{
-				Debug.LogError($"An error occurred: {gameEventException.Message}");
-			}
-			catch(Exception e)
-			{
-				Debug.LogError($"An error occurred while triggering the event: {e.Message}");
-			}
+				catch(GameEventException gameEventException)
+				{
+					Debug.LogError($"An error occurred: {gameEventException.Message}");
+				}
+				catch(Exception e)
+				{
+					Debug.LogError($"An error occurred while triggering the event: {e.Message}");
+				}
 		};
 
 		if (useThreadSafeOperations)

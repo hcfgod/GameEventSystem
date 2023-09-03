@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: PlayerDeathEvent (Chain)
   m_EditorClassIdentifier: 
   Event: {fileID: 11400000, guid: 8b23fdca7669a4e4898c58cd2e98a064, type: 2}
-  Delay: 5
+  Delay: 0

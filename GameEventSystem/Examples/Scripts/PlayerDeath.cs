@@ -32,6 +32,6 @@ public class PlayerDeath : MonoBehaviour
 		if (playerHealth <= 0)
 		{
 			Debug.Log("Player Is Dead.");
-		}
+		}  
 	}
 }

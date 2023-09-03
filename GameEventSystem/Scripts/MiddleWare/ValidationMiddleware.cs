@@ -16,6 +16,11 @@ public class ValidationMiddleware : IEventMiddleware
 			throw new GameEventException("Event data is null.");
 		}
 		
+		if(gameEvent.status == null)
+		{
+			gameEvent.status = new OneTimeEventStatus();
+		}
+		
 		return true;
 	}
 }
