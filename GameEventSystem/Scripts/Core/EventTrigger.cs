@@ -9,6 +9,8 @@ public class EventTrigger
 	private SharedEventState sharedState;
 	private MonoBehaviour monoBehaviour;
 	
+	public List<IEventMiddleware> Middlewares { get; set; } = new List<IEventMiddleware>();
+
 	public EventTrigger(SharedEventState sharedState, MonoBehaviour monoBehaviour)
 	{
 		this.sharedState = sharedState;
@@ -17,11 +19,14 @@ public class EventTrigger
 
 	public void TriggerEvent(GameEvent gameEvent, object eventData, bool useThreadSafeOperations = false, EventQueueManager eventQueueManager = null)
 	{
-		if (gameEvent == null)
+		foreach (var middleware in Middlewares)
 		{
-			throw new GameEventException("GameEvent is null.");
+			if (!middleware.Process(gameEvent, ref eventData))
+			{
+				return;
+			}
 		}
-
+		
 		if (sharedState == null)
 		{
 			throw new GameEventException("SharedState is null.");
@@ -30,11 +35,6 @@ public class EventTrigger
 		if (useThreadSafeOperations && eventQueueManager == null)
 		{
 			throw new GameEventException("EventQueueManager is null but thread-safe operations are requested.");
-		}
-		
-		if (eventData == null)
-		{
-			throw new GameEventException("Event data is null.");
 		}
 		
 		Action actualTriggerEventAction = () =>

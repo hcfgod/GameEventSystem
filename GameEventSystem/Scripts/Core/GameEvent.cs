@@ -7,6 +7,7 @@ public class GameEvent : ScriptableObject
 {
 	public string eventName;
 	public string eventCategory;
+	public string version = "1.0";
 	public IEventStatus status;
 	
 	public bool HasBeenTriggered;
